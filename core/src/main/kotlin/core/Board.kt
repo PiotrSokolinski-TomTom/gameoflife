@@ -1,9 +1,12 @@
-package com.tomtom
+package com.tomtom.core
+
+import kotlin.random.Random
+import kotlin.random.nextUInt
 
 class Board(
-    var cells: Array<Array<Int>> = Array(16) { Array(16) {0} }
-) {
-    fun tick() {
+    override var cells: Array<Array<Int>> = Array(16) { Array(16) {0} }
+): IBoard {
+    override fun tick() {
         val next = Array(cells.size) { Array(cells[0].size) {0} }
         for (x in cells.indices) {
             for (y in cells[x].indices) {
@@ -16,6 +19,14 @@ class Board(
             }
         }
         cells = next
+    }
+
+    fun randomizeBoard() {
+        for (x in cells.indices) {
+            for (y in cells[x].indices) {
+                cells[x][y] = (Random.nextUInt() % 2u).toInt()
+            }
+        }
     }
 
     private fun countAliveNeighbours(x: Int, y: Int): Int {

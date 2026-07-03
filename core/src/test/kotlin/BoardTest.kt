@@ -1,5 +1,4 @@
-import com.tomtom.Board
-import org.junit.jupiter.api.Assertions
+import com.tomtom.core.Board
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -96,5 +95,15 @@ class BoardTest {
         assertTrue(board.cells.contentDeepEquals(state2))
         board.tick()
         assertTrue(board.cells.contentDeepEquals(state1))
+    }
+
+    @Test
+    fun `randomize board`() {
+        val board = Board()
+        board.randomizeBoard()
+        val state1 = board.cells.map { it.clone() }.toTypedArray()
+        board.randomizeBoard()
+        val state2 = board.cells.map { it.clone() }.toTypedArray()
+        assertFalse(state1.contentDeepEquals(state2))
     }
 }
