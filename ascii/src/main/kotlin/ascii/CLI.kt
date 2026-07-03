@@ -13,6 +13,12 @@ class CLI {
             if (size !in 1..1000) {
                 throw IllegalArgumentException("Invalid size")
             }
+            println("Randomize? [y/N]")
+            if(scanner.next() == "y") {
+                val board = Board(Array(size) { Array(size) { 0 } })
+                board.randomizeBoard()
+                return board
+            }
             println("Board {0, 1}:")
             val cells = Array(size) { Array(size) { 0 } }
             for(i in 0..<size) {
