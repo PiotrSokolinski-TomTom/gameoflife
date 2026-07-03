@@ -43,14 +43,4 @@ class Board(
         }
         return count
     }
-
-    override fun toString(): String =
-        buildString {
-            for (row in cells) {
-                for (cell in row) {
-                    append("$cell ")
-                }
-                appendLine()
-            }
-        }
 }
