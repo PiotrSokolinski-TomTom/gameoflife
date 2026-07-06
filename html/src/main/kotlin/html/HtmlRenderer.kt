@@ -23,7 +23,7 @@ class HtmlRenderer {
                     title { +"Game of life" }
                     meta {
                         httpEquiv = "refresh"
-                        content = "0.5"
+                        content = "1"
                     }
                 }
                 body {
