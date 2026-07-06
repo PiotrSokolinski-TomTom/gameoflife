@@ -6,6 +6,12 @@ import kotlin.random.nextUInt
 class Board(
     override var cells: Array<Array<Int>> = Array(16) { Array(16) {0} }
 ): IBoard {
+    constructor(random: Random, cells: Array<Array<Int>>): this(cells) {
+        this.random = random
+    }
+
+    var random: Random = Random.Default
+
     override fun tick() {
         val next = Array(cells.size) { Array(cells[0].size) {0} }
         for (x in cells.indices) {
@@ -24,7 +30,7 @@ class Board(
     fun randomizeBoard() {
         for (x in cells.indices) {
             for (y in cells[x].indices) {
-                cells[x][y] = (Random.nextUInt() % 2u).toInt()
+                cells[x][y] = (random.nextUInt() % 2u).toInt()
             }
         }
     }
