@@ -4,6 +4,7 @@
   <modules>
     <module>core</module>
     <module>ascii</module>
+    <module>html</module>
   </modules>
   <groupId>com.tomtom</groupId>
   <artifactId>game-of-life</artifactId>
