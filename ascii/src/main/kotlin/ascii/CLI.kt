@@ -1,12 +1,12 @@
 package com.tomtom.ascii
 
+import com.tomtom.core.DefaultBoard
 import com.tomtom.core.Board
-import com.tomtom.core.IBoard
 import java.util.Scanner
 
 class CLI {
     companion object {
-        fun handleInput(): IBoard {
+        fun handleInput(): Board {
             val scanner = Scanner(System.`in`)
             println("Size [1; 1000]:")
             val size = scanner.nextInt()
@@ -15,7 +15,7 @@ class CLI {
             }
             println("Randomize? [y/N]")
             if(scanner.next() == "y") {
-                val board = Board(Array(size) { Array(size) { 0 } })
+                val board = DefaultBoard(Array(size) { Array(size) { 0 } })
                 board.randomizeBoard()
                 return board
             }
@@ -31,7 +31,7 @@ class CLI {
                     }
                 }
             }
-            return Board(cells)
+            return DefaultBoard(cells)
         }
     }
 

@@ -1,13 +1,13 @@
-import com.tomtom.core.Board
+import com.tomtom.core.DefaultBoard
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
-class BoardTest {
+class DefaultBoardTest {
 
     @Test
     fun `single alive dies`() {
-        val board = Board(
+        val board = DefaultBoard(
             arrayOf(
                 arrayOf(0, 0, 0),
                 arrayOf(0, 1, 0),
@@ -25,7 +25,7 @@ class BoardTest {
 
     @Test
     fun `pair alive dies`() {
-        val board = Board(
+        val board = DefaultBoard(
             arrayOf(
                 arrayOf(0, 1, 0),
                 arrayOf(0, 1, 0),
@@ -43,7 +43,7 @@ class BoardTest {
 
     @Test
     fun `new cell born`() {
-        val board = Board(
+        val board = DefaultBoard(
             arrayOf(
                 arrayOf(0, 1, 1),
                 arrayOf(0, 1, 0),
@@ -61,7 +61,7 @@ class BoardTest {
 
     @Test
     fun `still form of life`() {
-        val board = Board(
+        val board = DefaultBoard(
             arrayOf(
                 arrayOf(0, 1, 1),
                 arrayOf(0, 1, 1),
@@ -91,7 +91,7 @@ class BoardTest {
             arrayOf(1, 1, 1),
             arrayOf(0, 0, 0)
         )
-        val board = Board(state1)
+        val board = DefaultBoard(state1)
         board.tick()
         assertTrue(board.cells.contentDeepEquals(state2))
         board.tick()
@@ -100,7 +100,7 @@ class BoardTest {
 
     @Test
     fun `randomize board`() {
-        val board = Board()
+        val board = DefaultBoard()
         board.randomizeBoard()
         val state1 = board.cells.map { it.clone() }.toTypedArray()
         board.randomizeBoard()
@@ -116,7 +116,7 @@ class BoardTest {
             arrayOf(0, 0, 0),
             arrayOf(0, 0, 0)
         )
-        val board = Board(random, initial)
+        val board = DefaultBoard(random, initial)
         val expected = arrayOf(
             arrayOf(0, 0, 1),
             arrayOf(1, 0, 1),

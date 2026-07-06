@@ -1,14 +1,14 @@
 package com.tomtom.ascii
 
-import com.tomtom.core.IBoard
+import com.tomtom.core.Board
 
 class OutputFormatter {
     companion object {
-        fun simple(board: IBoard): String {
+        fun simple(board: Board): String {
             return custom(board, '1', '0')
         }
 
-        fun custom(board: IBoard, alive: Char, dead: Char): String {
+        fun custom(board: Board, alive: Char, dead: Char): String {
             val sb = StringBuilder()
             val cells = board.cells
             for (row in cells) {
