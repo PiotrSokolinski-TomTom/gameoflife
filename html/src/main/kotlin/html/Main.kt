@@ -9,7 +9,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun main() {
-    var board = GameOfLife.randomBoard(160, 90)
+    val width = 160
+    val height = 90
+    var board = GameOfLife.parseString(
+        """
+            0100000000
+            0010000000
+            1110000000
+            0000000000
+            0000000000
+            0000000000
+            0000000000
+            0000000000
+            0000000000
+            0000000000
+        """.trimIndent()
+    )
 
     embeddedServer(Netty, port = 8080) {
         routing {
@@ -17,7 +32,7 @@ fun main() {
                 board = GameOfLife.tick(board)
 
                 call.respondText(
-                    buildHTML(board),
+                    buildHTML(width, height, board),
                     ContentType.Text.Html
                 )
             }
