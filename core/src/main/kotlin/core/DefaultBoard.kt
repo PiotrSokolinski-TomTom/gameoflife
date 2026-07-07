@@ -1,41 +1,10 @@
 package com.tomtom.core
 
-import kotlin.random.Random
-import kotlin.random.nextUInt
-
 class DefaultBoard(
-    override var cells: Array<Array<Int>> = Array(16) { Array(16) {0} }
+    override val cells: Array<IntArray> = Array(16) { IntArray(16) {0} }
 ): Board {
-    constructor(random: Random, cells: Array<Array<Int>>): this(cells) {
-        this.random = random
-    }
 
-    var random: Random = Random.Default
-
-    override fun tick() {
-        val next = Array(cells.size) { Array(cells[0].size) {0} }
-        for (x in cells.indices) {
-            for (y in cells[x].indices) {
-                val neighbours = countAliveNeighbours(x, y)
-                next[x][y] = when (neighbours) {
-                    2 -> cells[x][y]
-                    3 -> 1
-                    else -> 0
-                }
-            }
-        }
-        cells = next
-    }
-
-    fun randomizeBoard() {
-        for (x in cells.indices) {
-            for (y in cells[x].indices) {
-                cells[x][y] = (random.nextUInt() % 2u).toInt()
-            }
-        }
-    }
-
-    private fun countAliveNeighbours(x: Int, y: Int): Int {
+    override fun countAliveNeighbours(x: Int, y: Int): Int {
         var count = 0
         for (dx in -1..1) {
             for (dy in -1..1) {

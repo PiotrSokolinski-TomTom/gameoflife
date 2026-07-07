@@ -1,7 +1,7 @@
 package com.tomtom.core
 
 interface Board {
-    var cells: Array<Array<Int>>
+    val cells: Array<IntArray>
 
-    fun tick()
+    fun countAliveNeighbours(x: Int, y: Int): Int
 }

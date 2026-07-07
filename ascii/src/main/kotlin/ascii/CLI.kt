@@ -2,6 +2,7 @@ package com.tomtom.ascii
 
 import com.tomtom.core.DefaultBoard
 import com.tomtom.core.Board
+import com.tomtom.core.GameOfLife
 import java.util.Scanner
 
 class CLI {
@@ -15,12 +16,10 @@ class CLI {
             }
             println("Randomize? [y/N]")
             if(scanner.next() == "y") {
-                val board = DefaultBoard(Array(size) { Array(size) { 0 } })
-                board.randomizeBoard()
-                return board
+                return GameOfLife.randomBoard(size, size)
             }
             println("Board {0, 1}:")
-            val cells = Array(size) { Array(size) { 0 } }
+            val cells = Array(size) { IntArray(size) { 0 } }
             for(i in 0..<size) {
                 for(j in 0..<size) {
                     val state = scanner.nextInt()

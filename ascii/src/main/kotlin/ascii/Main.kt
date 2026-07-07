@@ -1,14 +1,15 @@
 package com.tomtom.ascii
 
+import com.tomtom.core.GameOfLife
 import java.util.Scanner
 
 fun main() {
-    val board = CLI.handleInput()
+    var board = CLI.handleInput()
     println(OutputFormatter.simple(board))
     val scanner = Scanner(System.`in`)
     while(true) {
         scanner.nextLine()
-        board.tick()
+        board = GameOfLife.tick(board)
         println(OutputFormatter.simple(board))
     }
 }
