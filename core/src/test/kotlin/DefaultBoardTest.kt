@@ -2,7 +2,6 @@ import com.tomtom.core.DefaultBoard
 import com.tomtom.core.GameOfLife
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
 import kotlin.random.Random
 
 class DefaultBoardTest {

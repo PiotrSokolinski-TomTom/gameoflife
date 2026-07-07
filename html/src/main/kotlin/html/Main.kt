@@ -1,6 +1,5 @@
 package com.tomtom.html
 
-import com.tomtom.core.DefaultBoard
 import com.tomtom.core.GameOfLife
 import com.tomtom.html.HtmlRenderer.Companion.buildHTML
 import io.ktor.http.ContentType
