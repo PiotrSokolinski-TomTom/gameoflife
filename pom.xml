@@ -24,6 +24,8 @@
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
     <kotlin.code.style>official</kotlin.code.style>
+    <rest.assured.version>6.0.0</rest.assured.version>
+    <kotlinx.serialization.version>1.11.0</kotlinx.serialization.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -68,6 +70,22 @@
         <artifactId>spring-boot-starter-test</artifactId>
         <version>${spring.boot.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+        <version>${spring.boot.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.rest-assured</groupId>
+        <artifactId>rest-assured</artifactId>
+        <version>${rest.assured.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.kotlinx</groupId>
+        <artifactId>kotlinx-serialization-json</artifactId>
+        <version>${kotlinx.serialization.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -12,26 +12,26 @@ class OutputFormatter {
         fun custom(board: Board, alive: Char, dead: Char): String {
             val sb = StringBuilder()
             val cells = board.cells
-            var minWidth = Int.MAX_VALUE
-            var maxWidth = 0
-            var minHeight = Int.MAX_VALUE
-            var maxHeight = 0
+            var minX = Int.MAX_VALUE
+            var maxX = 0
+            var minY = Int.MAX_VALUE
+            var maxY = 0
             for(key in cells.keys) {
-                if(key.first < minWidth) {
-                    minWidth = key.first
+                if(key.first < minX) {
+                    minX = key.first
                 }
-                if(key.first > maxWidth) {
-                    maxWidth = key.first
+                if(key.first > maxX) {
+                    maxX = key.first
                 }
-                if(key.second < minHeight) {
-                    minHeight = key.second
+                if(key.second < minY) {
+                    minY = key.second
                 }
-                if(key.second > maxHeight) {
-                    maxHeight = key.second
+                if(key.second > maxY) {
+                    maxY = key.second
                 }
             }
-            for (i in minWidth until maxWidth) {
-                for (j in minHeight until maxHeight) {
+            for (i in minX until maxX) {
+                for (j in minY until maxY) {
                     sb.append(if(cells.getOrDefault(Pair(i,j), CellState.ALIVE) == CellState.ALIVE) alive else dead)
                     sb.append(' ')
                 }

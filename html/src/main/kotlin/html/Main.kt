@@ -26,7 +26,7 @@ fun main() {
         """.trimIndent()
     )
 
-    embeddedServer(Netty, port = 8080) {
+    embeddedServer(Netty, port = 8081) {
         routing {
             get("/") {
                 board = GameOfLife.tick(board)
