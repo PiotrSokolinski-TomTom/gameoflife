@@ -10,8 +10,19 @@ Conway's game of life implementation in Kotlin, see [Wikipedia](https://en.wikip
   - interactive - press enter to generate next epoch
 - HTML render
   - randomized 16 $\times$ 16 board which plays automatically in the browser, at localhost:8080, one epoch per second.
+- API
+  - random board at `/api/board` accepts params `width`, `height`, `seed`. All params are optional with defaults: `8`, `8`, `Random.Default`.
+  - intergration tests for all endpoints
+- React frontend
+  - panning (click and drag)
+  - zooming (scroll up and down)
+  - shuffling the board (via search params and text fields)
+  - simulation speed slider (0 to 60 fps)
+  - click-to-convert cell
 
-## How to run?
+## Installation and running
+
+In both cases navigate to repository root first.
 
 Backend
 
