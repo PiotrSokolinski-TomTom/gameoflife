@@ -314,7 +314,7 @@ export function BoardView() {
         />
         <Info>{simSpeed} FPS</Info>
       </SimComponent>
-      <Info>Cell size: {cellSize}</Info>
+      <Info>Cell size: {cellSize.toFixed(2)}</Info>
       <Author>Piotr Sokolinski</Author>
       <TextInputContainer>
         <TextInput

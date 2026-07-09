@@ -27,7 +27,7 @@ In both cases navigate to repository root first.
 Backend
 
 ```bash
-cd backend && mvn install && cd api && mvn spring-boot:run
+cd backend && mvn install && mvn -pl api spring-boot:run
 ```
 
 Frontend
