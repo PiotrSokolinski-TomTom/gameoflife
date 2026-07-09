@@ -9,10 +9,10 @@ import kotlin.random.Random
 @Service
 class BoardService {
 
-    fun createRandomBoard(width: String, height: String, seed: String): BoardDto {
-        val intWidth = if(width != "") width.toInt() else 8
-        val intHeight = if(height != "") height.toInt() else 8
-        val random = if(seed != "") Random(seed.toInt()) else Random.Default
+    fun createRandomBoard(width: String?, height: String?, seed: String?): BoardDto {
+        val intWidth = if(width != null && width != "") width.toInt() else 8
+        val intHeight = if(height != null && height != "") height.toInt() else 8
+        val random = if(seed != null && seed != "") Random(seed.toInt()) else Random.Default
         val board = GameOfLife.randomBoard(intWidth, intHeight, random)
         return BoardDto(board.cells)
     }

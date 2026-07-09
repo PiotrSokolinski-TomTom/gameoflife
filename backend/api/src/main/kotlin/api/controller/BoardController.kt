@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 class BoardController(private val service: BoardService) {
 
     @GetMapping("/random")
-    fun generateBoard(@RequestParam(required = false) width: String, @RequestParam(required = false) height: String, @RequestParam(required = false) seed: String): ResponseEntity<BoardDto> {
+    fun generateBoard(@RequestParam(required = false) width: String?, @RequestParam(required = false) height: String?, @RequestParam(required = false) seed: String?): ResponseEntity<BoardDto> {
         return ResponseEntity.ok(service.createRandomBoard(width, height, seed))
     }
 

@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import type { Board } from "../types/board";
 import { createRandomBoard } from "../api/board";
 
-export function useRandomBoard(
-  width?: number | string | undefined,
-  height?: number | string | undefined,
-  seed?: number | string | undefined,
+export function useRandomBoard( //xdd
+  width?: number | string | undefined | null,
+  height?: number | string | undefined | null,
+  seed?: number | string | undefined | null,
 ) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);

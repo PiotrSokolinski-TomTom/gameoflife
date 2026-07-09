@@ -1,10 +1,10 @@
 import styled from "styled-components";
-import type { Board } from "../types/board";
+import type { Board, Coordinate } from "../types/board";
 import { useEffect, useRef, useState } from "react";
 import { useRandomBoard } from "../hooks/useRandomBoard";
-import { Button, CircularProgress } from "@mui/material";
+import { Button, CircularProgress, Slider, TextField } from "@mui/material";
 import { useNextTick } from "../hooks/useNextTick";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 const BoardCanvas = styled.canvas`
   border: 1px solid black;
@@ -17,16 +17,81 @@ const Page = styled.div`
   align-items: center;
 `;
 
-const CELL_SIZE = 20; //20px x 20px
+const SimSlider = styled(Slider)`
+  width: 200px;
+`;
+
+const SimComponent = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+`;
+
+const Title = styled.p`
+  font-size: 32px;
+  color: white;
+`;
+
+const Author = styled.p`
+  font-size: 12px;
+  bottom: 12px;
+  color: gray;
+  position: absolute;
+`;
+
+const Info = styled.p`
+  font-size: 14px;
+  color: white;
+`;
+
+const StyledButton = styled(Button)`
+  font-size: 14px;
+  background: white;
+  margin: 8px;
+  color: black;
+`;
+
+const TextInput = styled(TextField)`
+  font-size: 14px;
+  background: white;
+  margin: 8px;
+  color: black;
+  width: 80px;
+`;
+
+const TextInputContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+`;
 
 export function BoardView() {
-  const { widthParam, heightParam, seedParam } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const widthParam = searchParams.get("width");
+  const heightParam = searchParams.get("height");
+  const seedParam = searchParams.get("seed");
+
+  const [width, setWidth] = useState(widthParam ?? "");
+  const [height, setHeight] = useState(heightParam ?? "");
+  const [seed, setSeed] = useState(seedParam ?? "");
+  // this is disguisting, should be done on router level, but dont remember how
+  useEffect(() => {
+    setWidth(widthParam ?? "");
+    setHeight(heightParam ?? "");
+    setSeed(seedParam ?? "");
+  }, [widthParam, heightParam, seedParam]);
 
   const {
     board: initial,
     loading,
     error,
   } = useRandomBoard(widthParam, heightParam, seedParam);
+
   const nextTick = useNextTick();
 
   const [board, setBoard] = useState<Board | null>(null);
@@ -44,11 +109,17 @@ export function BoardView() {
   });
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef(false);
+  const moveRef = useRef(false);
+
+  const [simSpeed, setSimSpeed] = useState(0);
+
+  const [cellSize, setCellSize] = useState(20);
 
   const handleMouseDown = (
     e: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
   ) => {
     dragRef.current = true;
+    moveRef.current = false;
     lastMousePosRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -64,6 +135,8 @@ export function BoardView() {
   ) => {
     if (!dragRef.current) return;
 
+    moveRef.current = true;
+
     const dx = e.clientX - lastMousePosRef.current.x;
     const dy = e.clientY - lastMousePosRef.current.y;
 
@@ -73,9 +146,55 @@ export function BoardView() {
     };
 
     setCamera((prev) => ({
-      x: prev.x - dx / CELL_SIZE,
-      y: prev.y - dy / CELL_SIZE,
+      x: prev.x - dx / cellSize,
+      y: prev.y - dy / cellSize,
     }));
+  };
+
+  const handleOnClick = (
+    e: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
+  ) => {
+    if (!board || !canvasRef.current || moveRef.current) return;
+
+    const boundingRect = canvasRef.current.getBoundingClientRect();
+
+    const x = e.clientX - boundingRect.left;
+    const y = e.clientY - boundingRect.top;
+
+    const gridX = Math.floor(x / cellSize + camera.x);
+    const gridY = Math.floor(y / cellSize + camera.y);
+
+    const key = `(${gridX}, ${gridY})` as Coordinate;
+
+    setBoard((prev) => {
+      if (!prev) return prev;
+
+      const cells = { ...prev.cells };
+
+      if (cells[key] === "ALIVE") {
+        delete cells[key];
+      } else {
+        cells[key] = "ALIVE";
+      }
+
+      return {
+        ...prev,
+        cells,
+      };
+    });
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.cancelable && e.preventDefault();
+    const min = 1;
+    const max = 100;
+    const newSize = Math.exp(
+      Math.max(
+        Math.log(min),
+        Math.min(Math.log(max), Math.log(cellSize) - e.deltaY * 0.001),
+      ),
+    );
+    setCellSize(Math.round(newSize * 100) / 100);
   };
 
   useEffect(() => {
@@ -88,6 +207,30 @@ export function BoardView() {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    ctx.beginPath();
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 1;
+
+    const gridStart = {
+      x: Math.round(-(camera.x % 1) * cellSize),
+      y: Math.round(-(camera.y % 1) * cellSize),
+    };
+
+    for (let x = gridStart.x; x <= canvas.width; x += cellSize) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+    }
+
+    for (let y = gridStart.y; y <= canvas.height; y += cellSize) {
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+    }
+
+    ctx.stroke();
+    // console.log(gridStart.x, gridStart.y);
+    // ctx.fillStyle = "#f00";
+    // ctx.fillRect(gridStart.x, gridStart.y, 10, 10);
+
     for (const [coordinate, state] of Object.entries(board.cells)) {
       if (state !== "ALIVE") continue;
 
@@ -96,13 +239,28 @@ export function BoardView() {
         .split(",")
         .map(Number);
 
-      const screenX = (worldX - camera.x) * CELL_SIZE;
-      const screenY = (worldY - camera.y) * CELL_SIZE;
+      const screenX = (worldX - camera.x) * cellSize;
+      const screenY = (worldY - camera.y) * cellSize;
 
       ctx.fillStyle = "black";
-      ctx.fillRect(screenX, screenY, CELL_SIZE, CELL_SIZE);
+      ctx.fillRect(screenX, screenY, cellSize, cellSize);
     }
-  }, [board, camera]);
+  }, [board, camera, cellSize]);
+
+  useEffect(() => {
+    if (simSpeed === 0 || !board) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const next = await nextTick.mutateAsync(board);
+        setBoard(next);
+      } catch (err) {
+        console.error(err);
+      }
+    }, 1000 / simSpeed);
+
+    return () => clearInterval(interval);
+  }, [simSpeed, board, nextTick]); //this is really shit
 
   if (loading) return <CircularProgress />;
   if (error) return <p>Error</p>;
@@ -118,23 +276,79 @@ export function BoardView() {
     }
   };
 
+  const handleRandomize = () => {
+    const params = new URLSearchParams();
+
+    if (width) params.set("width", width);
+    if (height) params.set("height", height);
+    if (seed) params.set("seed", seed);
+
+    setSearchParams(params);
+
+    window.location.reload();
+  };
+
   return (
     <Page>
+      <Title>Game of Life</Title>
       <BoardCanvas
-        width={900}
+        width={1200}
         height={600}
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
+        onClick={handleOnClick}
+        onWheel={handleWheel}
       />
-      <Button
-        aria-label="Next"
-        onClick={handleNext}
-        disabled={nextTick.isPending}
-      >
+      <StyledButton aria-label="Next" onClick={handleNext}>
         Next
-      </Button>
+      </StyledButton>
+      <SimComponent>
+        <Info>Simulation speed</Info>
+        <SimSlider
+          value={simSpeed}
+          onChange={(_, value) => setSimSpeed(value as number)}
+          min={0}
+          max={60}
+        />
+        <Info>{simSpeed} FPS</Info>
+      </SimComponent>
+      <Info>Cell size: {cellSize}</Info>
+      <Author>Piotr Sokolinski</Author>
+      <TextInputContainer>
+        <TextInput
+          aria-label="width"
+          variant="outlined"
+          size="small"
+          placeholder="Width"
+          value={width}
+          onChange={(e) => setWidth(e.target.value)}
+        >
+          Width
+        </TextInput>
+        <TextInput
+          aria-label="height"
+          variant="outlined"
+          size="small"
+          placeholder="Height"
+          value={height}
+          onChange={(e) => setHeight(e.target.value)}
+        >
+          Height
+        </TextInput>
+        <TextInput
+          aria-label="seed"
+          variant="outlined"
+          size="small"
+          placeholder="Seed"
+          value={seed}
+          onChange={(e) => setSeed(e.target.value)}
+        >
+          Seed
+        </TextInput>
+        <StyledButton onClick={handleRandomize}>Randomize!</StyledButton>
+      </TextInputContainer>
     </Page>
   );
 }
