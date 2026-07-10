@@ -2,6 +2,7 @@ package com.tomtom.api.api.controller
 
 import com.tomtom.api.api.dto.BoardDto
 import com.tomtom.api.api.service.BoardService
+import com.tomtom.core.CellState
 import jakarta.websocket.server.PathParam
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -19,7 +20,12 @@ import org.springframework.web.bind.annotation.RestController
 class BoardController(private val service: BoardService) {
 
     @GetMapping("/random")
-    fun generateBoard(@RequestParam(required = false) width: String?, @RequestParam(required = false) height: String?, @RequestParam(required = false) seed: String?): ResponseEntity<BoardDto> {
+    fun generateBoard(
+        @RequestParam(required = false) keep: Set<Int>?,
+        @RequestParam(required = false) change: Map<Int, CellState>?,
+        @RequestParam(required = false) width: String?,
+        @RequestParam(required = false) height: String?,
+        @RequestParam(required = false) seed: String?): ResponseEntity<BoardDto> {
         return ResponseEntity.ok(service.createRandomBoard(width, height, seed))
     }
 

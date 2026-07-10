@@ -19,14 +19,23 @@ class GameOfLife {
 
             for (cell in cellsToCompute) {
                 val aliveCount = board.countAliveNeighbours(cell.first, cell.second)
+                val current = board.cells[Pair(cell.first, cell.second)] ?: CellState.DEAD
                 /**
                  * less than 2 -> dies of underpopulation (not preserved to next generation)
                  * 2 -> state preserved to next generation
                  * 3 -> force-alive
                  * more than 3 -> dies of overpopulation (not preserved to next generation)
+                    if(aliveCount == 2 && board.cells[cell] == CellState.ALIVE || aliveCount == 3) {
+                        next[Pair(cell.first, cell.second)] = CellState.ALIVE
+                    }
                  */
-                if(aliveCount == 2 && board.cells[cell] == CellState.ALIVE || aliveCount == 3) {
-                    next[Pair(cell.first, cell.second)] = CellState.ALIVE
+                for (rule in board.gameRules) {
+                    val newState = when {
+                        rule.change.containsKey(aliveCount) -> rule.change.getValue(aliveCount)
+                        rule.keep.contains(aliveCount) -> current
+                        else -> continue
+                    }
+                    if (newState == CellState.ALIVE) next[Pair(cell.first, cell.second)] = CellState.ALIVE
                 }
             }
             return DefaultBoard(next)

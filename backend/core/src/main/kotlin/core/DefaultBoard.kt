@@ -1,7 +1,9 @@
 package com.tomtom.core
 
 class DefaultBoard(
-    override val cells: Map<Pair<Int, Int>, CellState> = HashMap()
+    override val cells: Map<Pair<Int, Int>, CellState> = HashMap(),
+    override val gameRules: Set<GameRule>
+            = HashSet(setOf(GameRule(setOf(2,3), hashMapOf(Pair(3, CellState.ALIVE))))),
 ): Board {
 
     override fun countAliveNeighbours(x: Int, y: Int): Int {
