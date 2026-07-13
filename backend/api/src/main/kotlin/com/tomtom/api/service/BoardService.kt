@@ -1,6 +1,6 @@
-package com.tomtom.api.api.service
+package com.tomtom.api.service
 
-import com.tomtom.api.api.dto.BoardDto
+import com.tomtom.api.dto.BoardDto
 import com.tomtom.core.DefaultBoard
 import com.tomtom.core.GameOfLife
 import org.springframework.stereotype.Service

@@ -1,3 +1,5 @@
+package com.tomtom.core
+
 import com.tomtom.core.Board
 import com.tomtom.core.GameOfLife
 import org.junit.jupiter.api.Assertions.*

@@ -1,4 +1,4 @@
-package com.tomtom.api.api.dto
+package com.tomtom.api.dto
 
 import com.tomtom.core.Position
 import kotlinx.serialization.Serializable

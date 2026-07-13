@@ -1,12 +1,10 @@
-package com.tomtom.api.api.controller
+package com.tomtom.api.controller
 
-import com.tomtom.api.api.dto.BoardDto
-import com.tomtom.api.api.service.BoardService
-import jakarta.websocket.server.PathParam
+import com.tomtom.api.dto.BoardDto
+import com.tomtom.api.service.BoardService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping

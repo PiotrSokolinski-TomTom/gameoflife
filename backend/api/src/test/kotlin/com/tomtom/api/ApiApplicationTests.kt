@@ -1,6 +1,6 @@
 package com.tomtom.api
 
-import com.tomtom.api.api.dto.BoardDto
+import com.tomtom.api.dto.BoardDto
 import com.tomtom.core.GameOfLife
 import io.restassured.RestAssured
 import io.restassured.RestAssured.get

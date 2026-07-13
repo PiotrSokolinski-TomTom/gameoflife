@@ -5,6 +5,8 @@ import { useRandomBoard } from "../hooks/useRandomBoard";
 import { Button, CircularProgress, Slider, TextField } from "@mui/material";
 import { useNextTick } from "../hooks/useNextTick";
 import { useSearchParams } from "react-router-dom";
+import { PatternLibrary } from "../components/PatternLibrary";
+import type { Pattern } from "../types/pattern";
 
 const BoardCanvas = styled.canvas`
   border: 1px solid black;
@@ -15,6 +17,7 @@ const Page = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow-x: hidden;
 `;
 
 const SimSlider = styled(Slider)`
@@ -30,8 +33,14 @@ const SimComponent = styled.div`
 `;
 
 const Title = styled.p`
+  position: absolute;
   font-size: 32px;
   color: white;
+  margin: 0;
+  background: #000000;
+  padding: 16px;
+  border-radius: 64px;
+  top: 12px;
 `;
 
 const Author = styled.p`
@@ -79,7 +88,6 @@ export function BoardView() {
   const [width, setWidth] = useState(widthParam ?? "");
   const [height, setHeight] = useState(heightParam ?? "");
   const [seed, setSeed] = useState(seedParam ?? "");
-  // this is disguisting, should be done on router level, but dont remember how
   useEffect(() => {
     setWidth(widthParam ?? "");
     setHeight(heightParam ?? "");
@@ -113,6 +121,9 @@ export function BoardView() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    ctx.canvas.height = window.innerHeight;
+    ctx.canvas.width = window.innerWidth;
 
     const cellSize = cellSizeRef.current;
     const camera = cameraRef.current;
@@ -180,12 +191,28 @@ export function BoardView() {
     () => () => {
       if (frameRef.current != null) {
         cancelAnimationFrame(frameRef.current);
-        // Reset so a remount (e.g. StrictMode's mount→unmount→remount in dev)
-        // can schedule a fresh frame instead of seeing a stale pending id.
         frameRef.current = null;
       }
     },
     [],
+  );
+
+  const loadPattern = useCallback(
+    (pattern: Pattern) => {
+      setSimSpeed(0);
+      setBoard({ cells: [...pattern.cells] });
+
+      const canvas = canvasRef.current;
+      const scale = cellSizeRef.current;
+      if (canvas) {
+        cameraRef.current = {
+          x: pattern.width / 2 - canvas.width / 2 / scale,
+          y: pattern.height / 2 - canvas.height / 2 / scale,
+        };
+      }
+      requestRender();
+    },
+    [requestRender],
   );
 
   useEffect(() => {
@@ -291,9 +318,6 @@ export function BoardView() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
-    // Only schedule the next tick once the current one has resolved, so there's
-    // never more than one request in flight. Effective rate self-caps at server
-    // latency instead of firing on a fixed schedule and overlapping requests.
     const scheduleNext = () => {
       timer = setTimeout(runTick, 1000 / simSpeed);
     };
@@ -351,8 +375,6 @@ export function BoardView() {
     <Page>
       <Title>Game of Life</Title>
       <BoardCanvas
-        width={1200}
-        height={600}
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -360,7 +382,7 @@ export function BoardView() {
         onClick={handleOnClick}
         onWheel={handleWheel}
       />
-      <StyledButton aria-label="Next" onClick={handleNext}>
+      {/* <StyledButton aria-label="Next" onClick={handleNext}>
         Next
       </StyledButton>
       <SimComponent>
@@ -374,7 +396,7 @@ export function BoardView() {
         <Info>{simSpeed} FPS</Info>
       </SimComponent>
       <Info>Cell size: {cellSize.toFixed(2)}</Info>
-      <Author>Piotr Sokolinski</Author>
+      <PatternLibrary onSelect={loadPattern} />
       <TextInputContainer>
         <TextInput
           aria-label="width"
@@ -407,7 +429,8 @@ export function BoardView() {
           Seed
         </TextInput>
         <StyledButton onClick={handleRandomize}>Randomize!</StyledButton>
-      </TextInputContainer>
+      </TextInputContainer> */}
+      <Author>Piotr Sokolinski</Author>
     </Page>
   );
 }
