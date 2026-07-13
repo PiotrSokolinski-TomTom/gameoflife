@@ -1,10 +1,10 @@
 import styled from "styled-components";
-import type { Board, Coordinate } from "../types/board";
-import { useEffect, useRef, useState } from "react";
+import type { Board } from "../types/board";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRandomBoard } from "../hooks/useRandomBoard";
 import { Button, CircularProgress, Slider, TextField } from "@mui/material";
 import { useNextTick } from "../hooks/useNextTick";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 const BoardCanvas = styled.canvas`
   border: 1px solid black;
@@ -95,25 +95,104 @@ export function BoardView() {
   const nextTick = useNextTick();
 
   const [board, setBoard] = useState<Board | null>(null);
+  const [simSpeed, setSimSpeed] = useState(0);
+  const [cellSize, setCellSize] = useState(20);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
+  const dragRef = useRef(false);
+  const moveRef = useRef(false);
+  const boardRef = useRef(board);
+  const cameraRef = useRef({ x: 0, y: 0 });
+  const cellSizeRef = useRef(cellSize);
+  const frameRef = useRef<number | null>(null);
+
+  const render = useCallback(() => {
+    frameRef.current = null;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const cellSize = cellSizeRef.current;
+    const camera = cameraRef.current;
+    const board = boardRef.current;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (cellSize > 5) {
+      ctx.beginPath();
+      ctx.strokeStyle = "#ddd";
+      ctx.lineWidth = 1;
+
+      const startX = Math.round(-(camera.x % 1) * cellSize);
+      const startY = Math.round(-(camera.y % 1) * cellSize);
+
+      for (let x = startX; x <= canvas.width; x += cellSize) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      for (let y = startY; y <= canvas.height; y += cellSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      ctx.stroke();
+    }
+
+    if (!board) return;
+
+    ctx.fillStyle = "black";
+    const cells = board.cells;
+    for (let i = 0; i < cells.length; i += 2) {
+      const screenX = (cells[i] - camera.x) * cellSize;
+      const screenY = (cells[i + 1] - camera.y) * cellSize;
+
+      if (
+        screenX + cellSize < 0 ||
+        screenY + cellSize < 0 ||
+        screenX > canvas.width ||
+        screenY > canvas.height
+      ) {
+        continue;
+      }
+
+      ctx.fillRect(screenX, screenY, cellSize, cellSize);
+    }
+  }, []);
+
+  const requestRender = useCallback(() => {
+    if (frameRef.current != null) return;
+    frameRef.current = requestAnimationFrame(render);
+  }, [render]);
+
+  useEffect(() => {
+    boardRef.current = board;
+    requestRender();
+  }, [board, requestRender]);
+
+  useEffect(() => {
+    cellSizeRef.current = cellSize;
+    requestRender();
+  }, [cellSize, requestRender]);
+
+  useEffect(
+    () => () => {
+      if (frameRef.current != null) {
+        cancelAnimationFrame(frameRef.current);
+        // Reset so a remount (e.g. StrictMode's mount→unmount→remount in dev)
+        // can schedule a fresh frame instead of seeing a stale pending id.
+        frameRef.current = null;
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (initial) {
       setBoard(initial);
     }
   }, [initial]);
-
-  const [camera, setCamera] = useState({
-    x: 0,
-    y: 0,
-  });
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const dragRef = useRef(false);
-  const moveRef = useRef(false);
-
-  const [simSpeed, setSimSpeed] = useState(0);
-
-  const [cellSize, setCellSize] = useState(20);
 
   const handleMouseDown = (
     e: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
@@ -145,10 +224,12 @@ export function BoardView() {
       y: e.clientY,
     };
 
-    setCamera((prev) => ({
-      x: prev.x - dx / cellSize,
-      y: prev.y - dy / cellSize,
-    }));
+    const scale = cellSizeRef.current;
+    cameraRef.current = {
+      x: cameraRef.current.x - dx / scale,
+      y: cameraRef.current.y - dy / scale,
+    };
+    requestRender();
   };
 
   const handleOnClick = (
@@ -161,21 +242,26 @@ export function BoardView() {
     const x = e.clientX - boundingRect.left;
     const y = e.clientY - boundingRect.top;
 
-    const gridX = Math.floor(x / cellSize + camera.x);
-    const gridY = Math.floor(y / cellSize + camera.y);
-
-    const key = `(${gridX}, ${gridY})` as Coordinate;
+    const camera = cameraRef.current;
+    const scale = cellSizeRef.current;
+    const gridX = Math.floor(x / scale + camera.x);
+    const gridY = Math.floor(y / scale + camera.y);
 
     setBoard((prev) => {
       if (!prev) return prev;
 
-      const cells = { ...prev.cells };
-
-      if (cells[key] === "ALIVE") {
-        delete cells[key];
-      } else {
-        cells[key] = "ALIVE";
+      let index = -1;
+      for (let i = 0; i < prev.cells.length; i += 2) {
+        if (prev.cells[i] === gridX && prev.cells[i + 1] === gridY) {
+          index = i;
+          break;
+        }
       }
+
+      const cells =
+        index === -1
+          ? [...prev.cells, gridX, gridY]
+          : [...prev.cells.slice(0, index), ...prev.cells.slice(index + 2)];
 
       return {
         ...prev,
@@ -185,7 +271,7 @@ export function BoardView() {
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.cancelable && e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const min = 1;
     const max = 100;
     const newSize = Math.exp(
@@ -197,70 +283,43 @@ export function BoardView() {
     setCellSize(Math.round(newSize * 100) / 100);
   };
 
+  const { mutateAsync: requestNextTick } = nextTick;
+
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !board) return;
+    if (simSpeed === 0) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
 
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.beginPath();
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 1;
-
-    const gridStart = {
-      x: Math.round(-(camera.x % 1) * cellSize),
-      y: Math.round(-(camera.y % 1) * cellSize),
+    // Only schedule the next tick once the current one has resolved, so there's
+    // never more than one request in flight. Effective rate self-caps at server
+    // latency instead of firing on a fixed schedule and overlapping requests.
+    const scheduleNext = () => {
+      timer = setTimeout(runTick, 1000 / simSpeed);
     };
 
-    for (let x = gridStart.x; x <= canvas.width; x += cellSize) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-    }
-
-    for (let y = gridStart.y; y <= canvas.height; y += cellSize) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-    }
-
-    ctx.stroke();
-    // console.log(gridStart.x, gridStart.y);
-    // ctx.fillStyle = "#f00";
-    // ctx.fillRect(gridStart.x, gridStart.y, 10, 10);
-
-    for (const [coordinate, state] of Object.entries(board.cells)) {
-      if (state !== "ALIVE") continue;
-
-      const [worldX, worldY] = coordinate
-        .substring(1, coordinate.length - 1)
-        .split(",")
-        .map(Number);
-
-      const screenX = (worldX - camera.x) * cellSize;
-      const screenY = (worldY - camera.y) * cellSize;
-
-      ctx.fillStyle = "black";
-      ctx.fillRect(screenX, screenY, cellSize, cellSize);
-    }
-  }, [board, camera, cellSize]);
-
-  useEffect(() => {
-    if (simSpeed === 0 || !board) return;
-
-    const interval = setInterval(async () => {
+    const runTick = async () => {
+      const current = boardRef.current;
+      if (!current) {
+        scheduleNext();
+        return;
+      }
       try {
-        const next = await nextTick.mutateAsync(board);
-        setBoard(next);
+        const next = await requestNextTick(current);
+        if (!cancelled) setBoard(next);
       } catch (err) {
         console.error(err);
       }
-    }, 1000 / simSpeed);
+      if (!cancelled) scheduleNext();
+    };
 
-    return () => clearInterval(interval);
-  }, [simSpeed, board, nextTick]); //this is really shit
+    scheduleNext();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [simSpeed, requestNextTick]);
 
   if (loading) return <CircularProgress />;
   if (error) return <p>Error</p>;

@@ -1,7 +1,7 @@
 package com.tomtom.ascii
 
 import com.tomtom.core.Board
-import com.tomtom.core.CellState
+import com.tomtom.core.Position
 
 class OutputFormatter {
     companion object {
@@ -16,23 +16,23 @@ class OutputFormatter {
             var maxX = 0
             var minY = Int.MAX_VALUE
             var maxY = 0
-            for(key in cells.keys) {
-                if(key.first < minX) {
-                    minX = key.first
+            for(key in cells) {
+                if(key.x < minX) {
+                    minX = key.x
                 }
-                if(key.first > maxX) {
-                    maxX = key.first
+                if(key.x > maxX) {
+                    maxX = key.x
                 }
-                if(key.second < minY) {
-                    minY = key.second
+                if(key.y < minY) {
+                    minY = key.y
                 }
-                if(key.second > maxY) {
-                    maxY = key.second
+                if(key.y > maxY) {
+                    maxY = key.y
                 }
             }
             for (i in minX until maxX) {
                 for (j in minY until maxY) {
-                    sb.append(if(cells.getOrDefault(Pair(i,j), CellState.ALIVE) == CellState.ALIVE) alive else dead)
+                    sb.append(if(cells.contains(Position(i,j))) alive else dead)
                     sb.append(' ')
                 }
                 sb.append('\n')

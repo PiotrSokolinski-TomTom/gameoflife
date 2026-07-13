@@ -2,8 +2,8 @@ package com.tomtom.ascii
 
 import com.tomtom.core.DefaultBoard
 import com.tomtom.core.Board
-import com.tomtom.core.CellState
 import com.tomtom.core.GameOfLife
+import com.tomtom.core.Position
 import java.util.Scanner
 
 class CLI {
@@ -20,12 +20,12 @@ class CLI {
                 return GameOfLife.randomBoard(size, size)
             }
             println("Board {0, 1}:")
-            val cells = HashMap<Pair<Int, Int>, CellState>()
+            val cells = HashSet<Position>()
             for(i in 0..<size) {
                 for(j in 0..<size) {
                     val state = scanner.nextInt()
                     if(state == 1) {
-                        cells[Pair(i,j)] = CellState.ALIVE
+                        cells.add(Position(i, j))
                     } else {
                         throw IllegalArgumentException("Invalid state")
                     }

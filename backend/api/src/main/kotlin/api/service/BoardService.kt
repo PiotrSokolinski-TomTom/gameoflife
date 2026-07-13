@@ -14,11 +14,11 @@ class BoardService {
         val intHeight = if(height != null && height != "") height.toInt() else 8
         val random = if(seed != null && seed != "") Random(seed.toInt()) else Random.Default
         val board = GameOfLife.randomBoard(intWidth, intHeight, random)
-        return BoardDto(board.cells)
+        return BoardDto.from(board.cells)
     }
 
     fun tick(boardDto: BoardDto): BoardDto {
-        val board = DefaultBoard(boardDto.cells)
-        return BoardDto(GameOfLife.tick(board).cells)
+        val board = DefaultBoard(boardDto.toPositions())
+        return BoardDto.from(GameOfLife.tick(board).cells)
     }
 }

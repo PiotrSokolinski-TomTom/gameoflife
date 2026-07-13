@@ -3,7 +3,5 @@ package com.tomtom.core
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class CellState {
-    ALIVE,
-    DEAD
+data class Position(val x: Int, val y: Int) {
 }

@@ -1,7 +1,7 @@
 package com.tomtom.html
 
 import com.tomtom.core.Board
-import com.tomtom.core.CellState
+import com.tomtom.core.Position
 import kotlinx.html.body
 import kotlinx.html.head
 import kotlinx.html.html
@@ -36,7 +36,7 @@ class HtmlRenderer {
                                         td {
                                             style =
                                                 "width:10px;height:10px;box-sizing:border-box;padding:0;margin:0;line-height:0;font-size:0;border:1px solid black;" +
-                                                if (board.cells.getOrDefault(Pair(j, i), CellState.DEAD) == CellState.ALIVE) "background-color:white;" else "background-color:#222222;"
+                                                if (board.cells.contains(Position(j, i))) "background-color:white;" else "background-color:#222222;"
                                         }
                                     }
                                 }
