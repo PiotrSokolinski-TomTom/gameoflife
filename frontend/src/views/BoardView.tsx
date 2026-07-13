@@ -2,11 +2,10 @@ import styled from "styled-components";
 import type { Board } from "../types/board";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRandomBoard } from "../hooks/useRandomBoard";
-import { Button, CircularProgress, Slider, TextField } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useNextTick } from "../hooks/useNextTick";
-import { useSearchParams } from "react-router-dom";
-import { PatternLibrary } from "../components/PatternLibrary";
 import type { Pattern } from "../types/pattern";
+import SideDrawer from "../components/SideDrawer";
 
 const BoardCanvas = styled.canvas`
   border: 1px solid black;
@@ -17,19 +16,7 @@ const Page = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  overflow-x: hidden;
-`;
-
-const SimSlider = styled(Slider)`
-  width: 200px;
-`;
-
-const SimComponent = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
+  overflow: hidden;
 `;
 
 const Title = styled.p`
@@ -41,6 +28,7 @@ const Title = styled.p`
   padding: 16px;
   border-radius: 64px;
   top: 12px;
+  border: 2px solid gray;
 `;
 
 const Author = styled.p`
@@ -50,58 +38,12 @@ const Author = styled.p`
   position: absolute;
 `;
 
-const Info = styled.p`
-  font-size: 14px;
-  color: white;
-`;
-
-const StyledButton = styled(Button)`
-  font-size: 14px;
-  background: white;
-  margin: 8px;
-  color: black;
-`;
-
-const TextInput = styled(TextField)`
-  font-size: 14px;
-  background: white;
-  margin: 8px;
-  color: black;
-  width: 80px;
-`;
-
-const TextInputContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-`;
-
 export function BoardView() {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const widthParam = searchParams.get("width");
-  const heightParam = searchParams.get("height");
-  const seedParam = searchParams.get("seed");
-
-  const [width, setWidth] = useState(widthParam ?? "");
-  const [height, setHeight] = useState(heightParam ?? "");
-  const [seed, setSeed] = useState(seedParam ?? "");
-  useEffect(() => {
-    setWidth(widthParam ?? "");
-    setHeight(heightParam ?? "");
-    setSeed(seedParam ?? "");
-  }, [widthParam, heightParam, seedParam]);
-
-  const {
-    board: initial,
-    loading,
-    error,
-  } = useRandomBoard(widthParam, heightParam, seedParam);
-
   const nextTick = useNextTick();
 
+  const [width, setWidth] = useState<string>("");
+  const [height, setHeight] = useState<string>("");
+  const [seed, setSeed] = useState<string>("");
   const [board, setBoard] = useState<Board | null>(null);
   const [simSpeed, setSimSpeed] = useState(0);
   const [cellSize, setCellSize] = useState(20);
@@ -110,9 +52,19 @@ export function BoardView() {
   const dragRef = useRef(false);
   const moveRef = useRef(false);
   const boardRef = useRef(board);
+  const autoFollowShape = useRef(false);
+  const autoResizeCanvas = useRef(false);
+  const [followShape, setFollowShape] = useState(false);
+  const [resizeCanvas, setResizeCanvas] = useState(false);
   const cameraRef = useRef({ x: 0, y: 0 });
   const cellSizeRef = useRef(cellSize);
   const frameRef = useRef<number | null>(null);
+
+  const {
+    mutateAsync: randomize,
+    isPending: randomizing,
+    isError,
+  } = useRandomBoard();
 
   const render = useCallback(() => {
     frameRef.current = null;
@@ -125,9 +77,55 @@ export function BoardView() {
     ctx.canvas.height = window.innerHeight;
     ctx.canvas.width = window.innerWidth;
 
+    const board = boardRef.current;
+    const cells = board?.cells;
+
+    if (
+      (autoFollowShape.current || autoResizeCanvas.current) &&
+      cells &&
+      cells.length >= 2
+    ) {
+      let minX = cells[0];
+      let maxX = cells[0];
+      let minY = cells[1];
+      let maxY = cells[1];
+      for (let i = 0; i < cells.length; i += 2) {
+        const cx = cells[i];
+        const cy = cells[i + 1];
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+      }
+
+      const shapeWidth = maxX - minX + 1;
+      const shapeHeight = maxY - minY + 1;
+      const shapeCenterX = (minX + maxX + 1) / 2;
+      const shapeCenterY = (minY + maxY + 1) / 2;
+
+      if (autoResizeCanvas.current) {
+        const padding = 0.9;
+        const fitScale =
+          Math.min(canvas.width / shapeWidth, canvas.height / shapeHeight) *
+          padding;
+        const clamped = Math.min(100, Math.max(1, fitScale));
+        if (Math.abs(clamped - cellSizeRef.current) > 0.01) {
+          cellSizeRef.current = clamped;
+          setCellSize(Math.round(clamped * 100) / 100);
+        }
+      }
+
+      if (autoFollowShape.current) {
+        const scale = cellSizeRef.current;
+        cameraRef.current = {
+          x: shapeCenterX - canvas.width / 2 / scale,
+          y: shapeCenterY - canvas.height / 2 / scale,
+        };
+      }
+    }
+
     const cellSize = cellSizeRef.current;
     const camera = cameraRef.current;
-    const board = boardRef.current;
 
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -151,10 +149,9 @@ export function BoardView() {
       ctx.stroke();
     }
 
-    if (!board) return;
+    if (!cells) return;
 
     ctx.fillStyle = "black";
-    const cells = board.cells;
     for (let i = 0; i < cells.length; i += 2) {
       const screenX = (cells[i] - camera.x) * cellSize;
       const screenY = (cells[i + 1] - camera.y) * cellSize;
@@ -215,11 +212,46 @@ export function BoardView() {
     [requestRender],
   );
 
-  useEffect(() => {
-    if (initial) {
-      setBoard(initial);
-    }
-  }, [initial]);
+  const centerAndZoom = useCallback(
+    (cells: number[]) => {
+      const canvas = canvasRef.current;
+      if (!canvas || cells.length < 2) return;
+
+      let minX = cells[0];
+      let maxX = cells[0];
+      let minY = cells[1];
+      let maxY = cells[1];
+      for (let i = 0; i < cells.length; i += 2) {
+        const cx = cells[i];
+        const cy = cells[i + 1];
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+      }
+
+      const shapeWidth = maxX - minX + 1;
+      const shapeHeight = maxY - minY + 1;
+      const shapeCenterX = (minX + maxX + 1) / 2;
+      const shapeCenterY = (minY + maxY + 1) / 2;
+
+      const padding = 0.9;
+      const fitScale =
+        Math.min(canvas.width / shapeWidth, canvas.height / shapeHeight) *
+        padding;
+      const scale = Math.min(100, Math.max(1, fitScale));
+
+      cellSizeRef.current = scale;
+      setCellSize(Math.round(scale * 100) / 100);
+
+      cameraRef.current = {
+        x: shapeCenterX - canvas.width / 2 / scale,
+        y: shapeCenterY - canvas.height / 2 / scale,
+      };
+      requestRender();
+    },
+    [requestRender],
+  );
 
   const handleMouseDown = (
     e: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
@@ -299,15 +331,49 @@ export function BoardView() {
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     if (e.cancelable) e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const min = 1;
     const max = 100;
-    const newSize = Math.exp(
-      Math.max(
-        Math.log(min),
-        Math.min(Math.log(max), Math.log(cellSize) - e.deltaY * 0.001),
-      ),
-    );
-    setCellSize(Math.round(newSize * 100) / 100);
+    const oldScale = cellSizeRef.current;
+    const newScale =
+      Math.round(
+        Math.exp(
+          Math.max(
+            Math.log(min),
+            Math.min(Math.log(max), Math.log(oldScale) - e.deltaY * 0.001),
+          ),
+        ) * 100,
+      ) / 100;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    cameraRef.current = {
+      x: cameraRef.current.x + mouseX / oldScale - mouseX / newScale,
+      y: cameraRef.current.y + mouseY / oldScale - mouseY / newScale,
+    };
+
+    setCellSize(newScale);
+  };
+
+  const handleAutoFollowShape = (
+    _e: React.ChangeEvent<HTMLInputElement>,
+    checked: boolean,
+  ) => {
+    autoFollowShape.current = checked;
+    setFollowShape(checked);
+    requestRender();
+  };
+
+  const handleAutoResizeCanvas = (
+    _e: React.ChangeEvent<HTMLInputElement>,
+    checked: boolean,
+  ) => {
+    autoResizeCanvas.current = checked;
+    setResizeCanvas(checked);
+    requestRender();
   };
 
   const { mutateAsync: requestNextTick } = nextTick;
@@ -345,8 +411,23 @@ export function BoardView() {
     };
   }, [simSpeed, requestNextTick]);
 
-  if (loading) return <CircularProgress />;
-  if (error) return <p>Error</p>;
+  const handleRandomize = useCallback(async () => {
+    try {
+      const next = await randomize({ width, height, seed });
+      setSimSpeed(0);
+      setBoard(next);
+      centerAndZoom(next.cells);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [randomize, width, height, seed, centerAndZoom]);
+
+  useEffect(() => {
+    void handleRandomize();
+  }, []);
+
+  if (randomizing && !board) return <CircularProgress />;
+  if (isError && !board) return <p>Error</p>;
 
   const handleNext = async () => {
     if (!board) return;
@@ -359,21 +440,32 @@ export function BoardView() {
     }
   };
 
-  const handleRandomize = () => {
-    const params = new URLSearchParams();
-
-    if (width) params.set("width", width);
-    if (height) params.set("height", height);
-    if (seed) params.set("seed", seed);
-
-    setSearchParams(params);
-
-    window.location.reload();
+  const handleClear = async () => {
+    setBoard(null);
   };
 
   return (
     <Page>
       <Title>Game of Life</Title>
+      <SideDrawer
+        simSpeed={simSpeed}
+        onSimSpeedChange={setSimSpeed}
+        cellSize={cellSize}
+        onNext={handleNext}
+        autoFollowShape={followShape}
+        onAutoFollowShape={handleAutoFollowShape}
+        autoResizeCanvas={resizeCanvas}
+        onAutoResizeCanvas={handleAutoResizeCanvas}
+        onSelectPattern={loadPattern}
+        width={width}
+        onWidthChange={setWidth}
+        height={height}
+        onHeightChange={setHeight}
+        seed={seed}
+        onSeedChange={setSeed}
+        onRandomize={handleRandomize}
+        onClear={handleClear}
+      />
       <BoardCanvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -382,54 +474,6 @@ export function BoardView() {
         onClick={handleOnClick}
         onWheel={handleWheel}
       />
-      {/* <StyledButton aria-label="Next" onClick={handleNext}>
-        Next
-      </StyledButton>
-      <SimComponent>
-        <Info>Simulation speed</Info>
-        <SimSlider
-          value={simSpeed}
-          onChange={(_, value) => setSimSpeed(value as number)}
-          min={0}
-          max={60}
-        />
-        <Info>{simSpeed} FPS</Info>
-      </SimComponent>
-      <Info>Cell size: {cellSize.toFixed(2)}</Info>
-      <PatternLibrary onSelect={loadPattern} />
-      <TextInputContainer>
-        <TextInput
-          aria-label="width"
-          variant="outlined"
-          size="small"
-          placeholder="Width"
-          value={width}
-          onChange={(e) => setWidth(e.target.value)}
-        >
-          Width
-        </TextInput>
-        <TextInput
-          aria-label="height"
-          variant="outlined"
-          size="small"
-          placeholder="Height"
-          value={height}
-          onChange={(e) => setHeight(e.target.value)}
-        >
-          Height
-        </TextInput>
-        <TextInput
-          aria-label="seed"
-          variant="outlined"
-          size="small"
-          placeholder="Seed"
-          value={seed}
-          onChange={(e) => setSeed(e.target.value)}
-        >
-          Seed
-        </TextInput>
-        <StyledButton onClick={handleRandomize}>Randomize!</StyledButton>
-      </TextInputContainer> */}
       <Author>Piotr Sokolinski</Author>
     </Page>
   );

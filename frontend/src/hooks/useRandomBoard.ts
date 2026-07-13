@@ -1,33 +1,21 @@
-import { useEffect, useState } from "react";
-import type { Board } from "../types/board";
+import { useMutation } from "@tanstack/react-query";
 import { createRandomBoard } from "../api/board";
 
-export function useRandomBoard( //xdd
-  width?: number | string | undefined | null,
-  height?: number | string | undefined | null,
-  seed?: number | string | undefined | null,
-) {
-  const [board, setBoard] = useState<Board | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type RandomBoardParams = {
+  width?: number | string | null;
+  height?: number | string | null;
+  seed?: number | string | null;
+};
 
-  useEffect(() => {
-    let ignore = false;
+const toNumber = (value?: number | string | null): number | undefined => {
+  if (value === undefined || value === null || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
 
-    setLoading(true);
-    setError(null);
-    createRandomBoard(width as number, height as number, seed as number)
-      .then((data) => {
-        if (!ignore) setBoard(data);
-      })
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "unknown error"),
-      )
-      .finally(() => setLoading(false));
-    return () => {
-      ignore = true;
-    };
-  }, [width, height, seed]);
-
-  return { board, loading, error };
+export function useRandomBoard() {
+  return useMutation({
+    mutationFn: ({ width, height, seed }: RandomBoardParams) =>
+      createRandomBoard(toNumber(width), toNumber(height), toNumber(seed)),
+  });
 }

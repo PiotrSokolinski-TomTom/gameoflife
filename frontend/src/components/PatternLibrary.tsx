@@ -2,11 +2,9 @@ import { useState } from "react";
 import styled from "styled-components";
 import { Button, CircularProgress } from "@mui/material";
 import type { Pattern } from "../types/pattern";
-import {
-  useCategoryPatterns,
-  useFeaturedPatterns,
-} from "../hooks/usePatterns";
+import { useCategoryPatterns, useFeaturedPatterns } from "../hooks/usePatterns";
 import { PatternCard } from "./PatternCard";
+import { ActionButton, MaxWRow } from "./SideDrawer";
 
 const TABS: { label: string; category: string | null }[] = [
   { label: "Featured", category: null },
@@ -14,28 +12,6 @@ const TABS: { label: string; category: string | null }[] = [
   { label: "Oscillators", category: "oscillators" },
   { label: "Spaceships", category: "spaceships" },
 ];
-
-const Panel = styled.div`
-  width: 90%;
-  max-width: 1000px;
-  margin: 8px auto;
-  background: #1e1e1e;
-  border: 1px solid #444;
-  border-radius: 8px;
-  color: white;
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-`;
-
-const HeaderTitle = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-`;
 
 const Tabs = styled.div`
   display: flex;
@@ -45,12 +21,13 @@ const Tabs = styled.div`
 `;
 
 const Tab = styled.button<{ $active: boolean }>`
-  font-size: 13px;
+  font-size: 14px;
+  font-family: "Courier New", Courier, monospace;
   padding: 4px 12px;
   border-radius: 999px;
-  border: 1px solid ${(p) => (p.$active ? "#fff" : "#555")};
-  background: ${(p) => (p.$active ? "#fff" : "transparent")};
-  color: ${(p) => (p.$active ? "#000" : "#ccc")};
+  border: 1px solid #ffffff;
+  background: ${(p) => (p.$active ? "#ffffff" : "transparent")};
+  color: ${(p) => (p.$active ? "#000000" : "#ffffff")};
   cursor: pointer;
 `;
 
@@ -74,59 +51,59 @@ export function PatternLibrary({
 }: {
   onSelect: (pattern: Pattern) => void;
 }) {
-  const [open, setOpen] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
-
+  const [limit, setLimit] = useState(9);
   const category = TABS[activeTab].category;
   const featured = useFeaturedPatterns();
-  const categoryQuery = useCategoryPatterns(category);
+  const categoryQuery = useCategoryPatterns(category, limit);
   const query = category === null ? featured : categoryQuery;
 
   return (
-    <Panel>
-      <Header>
-        <HeaderTitle>Pattern Library</HeaderTitle>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => setOpen((o) => !o)}
-          sx={{ color: "white", borderColor: "#555" }}
+    <>
+      <Tabs>
+        {TABS.map((tab, i) => (
+          <Tab
+            key={tab.label}
+            $active={i === activeTab}
+            onClick={() => {
+              setActiveTab(i);
+              setLimit(9);
+            }}
+          >
+            {tab.label}
+          </Tab>
+        ))}
+      </Tabs>
+      <Grid>
+        {query.isLoading && <CircularProgress size={24} />}
+        {query.isError && (
+          <Message>Could not load patterns from Catagolue.</Message>
+        )}
+        {query.data?.length === 0 && <Message>No patterns found.</Message>}
+        {query.data?.map((pattern) => (
+          <PatternCard
+            key={pattern.apgcode}
+            pattern={pattern}
+            onLoad={onSelect}
+          />
+        ))}
+      </Grid>
+      <MaxWRow>
+        <ActionButton
+          onClick={() => {
+            setLimit(limit + 3);
+          }}
         >
-          {open ? "Hide" : "Show"}
-        </Button>
-      </Header>
-
-      {open && (
-        <>
-          <Tabs>
-            {TABS.map((tab, i) => (
-              <Tab
-                key={tab.label}
-                $active={i === activeTab}
-                onClick={() => setActiveTab(i)}
-              >
-                {tab.label}
-              </Tab>
-            ))}
-          </Tabs>
-          <Grid>
-            {query.isLoading && <CircularProgress size={24} />}
-            {query.isError && (
-              <Message>Could not load patterns from Catagolue.</Message>
-            )}
-            {query.data?.length === 0 && (
-              <Message>No patterns found.</Message>
-            )}
-            {query.data?.map((pattern) => (
-              <PatternCard
-                key={pattern.apgcode}
-                pattern={pattern}
-                onLoad={onSelect}
-              />
-            ))}
-          </Grid>
-        </>
-      )}
-    </Panel>
+          Show more
+        </ActionButton>
+        <ActionButton
+          onClick={() => {
+            setLimit(limit - 3);
+          }}
+        >
+          Show less
+        </ActionButton>
+      </MaxWRow>
+    </>
   );
 }

@@ -8,10 +8,10 @@ export function useFeaturedPatterns() {
   });
 }
 
-export function useCategoryPatterns(category: string | null) {
+export function useCategoryPatterns(category: string | null, limit: number) {
   return useQuery({
-    queryKey: ["patterns", "category", category],
-    queryFn: () => fetchCategory(category as string),
+    queryKey: ["patterns", "category", category, limit],
+    queryFn: () => fetchCategory(category as string, limit),
     enabled: category !== null,
   });
 }
