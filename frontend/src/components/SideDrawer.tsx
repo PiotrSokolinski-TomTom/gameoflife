@@ -151,47 +151,6 @@ export default function SideDrawer({
         >
           Close menu <CloseIcon />
         </ActionButton>
-        <SectionTitle>Simulation</SectionTitle>
-        <ActionButton variant="contained" aria-label="Next" onClick={onNext}>
-          Next tick
-        </ActionButton>
-        <Row>
-          <Info>Simulation speed</Info>
-          <Slider
-            sx={{ width: 200 }}
-            value={simSpeed}
-            onChange={(_, value) => onSimSpeedChange(value as number)}
-            min={0}
-            max={60}
-          />
-          <Info>{simSpeed} FPS</Info>
-        </Row>
-        <Row>
-          <StyledCheckbox
-            checked={autoFollowShape}
-            onChange={onAutoFollowShape}
-            disableRipple
-          />
-          <Info>Auto follow shape</Info>
-        </Row>
-        <Row>
-          <StyledCheckbox
-            checked={autoResizeCanvas}
-            onChange={onAutoResizeCanvas}
-            disableRipple
-          />
-          <Info>Auto resize canvas</Info>
-        </Row>
-
-        <Info>Cell size: {cellSize.toFixed(2)}</Info>
-
-        <Divider />
-
-        <SectionTitle>Patterns</SectionTitle>
-        <PatternLibrary onSelect={onSelectPattern} />
-
-        <Divider />
-
         <SectionTitle>New board</SectionTitle>
         <Row>
           <StyledTextField
@@ -227,6 +186,42 @@ export default function SideDrawer({
             Clear board
           </ActionButton>
         </MaxWRow>
+        <SectionTitle>Simulation</SectionTitle>
+        <ActionButton variant="contained" aria-label="Next" onClick={onNext}>
+          Next tick
+        </ActionButton>
+        <Row>
+          <Info>Simulation speed</Info>
+          <Slider
+            sx={{ width: 200 }}
+            value={simSpeed}
+            onChange={(_, value) => onSimSpeedChange(value as number)}
+            min={0}
+            max={60}
+          />
+          <Info>{simSpeed} FPS</Info>
+        </Row>
+        <Row>
+          <StyledCheckbox
+            checked={autoFollowShape}
+            onChange={onAutoFollowShape}
+            disableRipple
+          />
+          <Info>Auto follow shape</Info>
+        </Row>
+        <Row>
+          <StyledCheckbox
+            checked={autoResizeCanvas}
+            onChange={onAutoResizeCanvas}
+            disableRipple
+          />
+          <Info>Auto resize canvas</Info>
+        </Row>
+
+        <Info>Cell size: {cellSize.toFixed(2)}</Info>
+
+        <SectionTitle>Patterns</SectionTitle>
+        <PatternLibrary onSelect={onSelectPattern} />
       </DrawerContent>
     </StyledBox>
   );

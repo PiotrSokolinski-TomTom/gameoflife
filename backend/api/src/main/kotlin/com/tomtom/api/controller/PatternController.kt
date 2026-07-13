@@ -1,6 +1,7 @@
 package com.tomtom.api.controller
 
 import com.tomtom.api.dto.PatternDto
+import com.tomtom.api.dto.PatternPageDto
 import com.tomtom.api.service.PatternService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -32,7 +33,8 @@ class PatternController(private val service: PatternService) {
     @GetMapping("/category/{category}")
     fun browseCategory(
         @PathVariable category: String,
-        @RequestParam(defaultValue = "12") limit: Int,
-    ): ResponseEntity<List<PatternDto>> =
-        ResponseEntity.ok(service.browseCategory(category, limit).map(PatternDto::from))
+        @RequestParam(defaultValue = "0") offset: Int,
+        @RequestParam(defaultValue = "15") limit: Int,
+    ): ResponseEntity<PatternPageDto> =
+        ResponseEntity.ok(PatternPageDto.from(service.browseCategory(category, offset, limit)))
 }

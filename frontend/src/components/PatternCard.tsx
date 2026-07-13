@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import type { Pattern } from "../types/pattern";
 
-const PREVIEW_SIZE = 72;
+const PREVIEW_SIZE = 90;
 
 const Card = styled.button`
   display: flex;
@@ -15,7 +15,7 @@ const Card = styled.button`
   border-radius: 6px;
   cursor: pointer;
   color: white;
-  width: 110px;
+  width: 130px;
 
   &:hover {
     border-color: #888;
@@ -28,8 +28,8 @@ const Preview = styled.canvas`
   border-radius: 4px;
 `;
 
-const Name = styled.span`
-  font-size: 13px;
+const Name = styled.span<{ $label: string }>`
+  font-size: ${(p) => (p.$label.length > 15 ? "10px" : "13px")};
   font-weight: 600;
   text-align: center;
 `;
@@ -85,12 +85,14 @@ export function PatternCard({
     }
   }, [pattern]);
 
+  const label = pattern.name ?? pattern.apgcode;
+
   return (
     <Card onClick={() => onLoad(pattern)} title={`Load ${pattern.apgcode}`}>
       <Preview ref={canvasRef} width={PREVIEW_SIZE} height={PREVIEW_SIZE} />
-      <Name>{pattern.name ?? pattern.apgcode}</Name>
+      <Name $label={label}>{label}</Name>
       <Meta>
-        {pattern.width}×{pattern.height} · seen{" "}
+        {pattern.width}x{pattern.height} · seen{" "}
         {formatOccurrences(pattern.occurrences)}
       </Meta>
     </Card>

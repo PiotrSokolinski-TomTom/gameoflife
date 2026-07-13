@@ -10,17 +10,25 @@ export async function fetchFeatured(): Promise<Pattern[]> {
   return response.json() as Promise<Pattern[]>;
 }
 
+export interface PatternPage {
+  patterns: Pattern[];
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+}
+
 export async function fetchCategory(
   category: string,
-  limit = 12,
-): Promise<Pattern[]> {
+  offset = 0,
+  limit = 15,
+): Promise<PatternPage> {
   const response = await fetch(
-    `${BASE_URL}/patterns/category/${category}?limit=${limit}`,
+    `${BASE_URL}/patterns/category/${category}?offset=${offset}&limit=${limit}`,
   );
   if (!response.ok) {
     throw new Error("API error");
   }
-  return response.json() as Promise<Pattern[]>;
+  return response.json() as Promise<PatternPage>;
 }
 
 export interface BrowseParams {

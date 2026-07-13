@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchCategory, fetchFeatured } from "../api/patterns";
 
 export function useFeaturedPatterns() {
@@ -8,10 +8,15 @@ export function useFeaturedPatterns() {
   });
 }
 
-export function useCategoryPatterns(category: string | null, limit: number) {
+export function useCategoryPatterns(
+  category: string | null,
+  offset: number,
+  limit: number,
+) {
   return useQuery({
-    queryKey: ["patterns", "category", category, limit],
-    queryFn: () => fetchCategory(category as string, limit),
+    queryKey: ["patterns", "category", category, offset, limit],
+    queryFn: () => fetchCategory(category as string, offset, limit),
     enabled: category !== null,
+    placeholderData: keepPreviousData,
   });
 }

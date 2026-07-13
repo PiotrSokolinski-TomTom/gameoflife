@@ -9,6 +9,7 @@ import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.body
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class CatagoluePatternProvider : PatternProvider {
@@ -16,6 +17,9 @@ class CatagoluePatternProvider : PatternProvider {
     private val BASE_URL = "https://catagolue.hatsya.com"
 
     private val log = LoggerFactory.getLogger(javaClass)
+
+    /** Cache of the full decoded census per "rule/symmetry/prefix". Catagolue censuses are effectively static. */
+    private val cache = ConcurrentHashMap<String, List<Pattern>>()
 
     private val restClient: RestClient = RestClient.builder()
         .baseUrl(BASE_URL)
@@ -27,7 +31,13 @@ class CatagoluePatternProvider : PatternProvider {
         )
         .build()
 
-    override fun fetch(rule: String, symmetry: String, prefix: String, limit: Int): List<Pattern> {
+    override fun fetch(rule: String, symmetry: String, prefix: String, limit: Int): List<Pattern> =
+        fetchAll(rule, symmetry, prefix).take(limit)
+
+    override fun fetchAll(rule: String, symmetry: String, prefix: String): List<Pattern> =
+        cache.getOrPut("$rule/$symmetry/$prefix") { load(rule, symmetry, prefix) }
+
+    private fun load(rule: String, symmetry: String, prefix: String): List<Pattern> {
         val csv = try {
             restClient.get()
                 .uri("/textcensus/{rule}/{symmetry}/{prefix}", rule, symmetry, prefix)
@@ -43,7 +53,6 @@ class CatagoluePatternProvider : PatternProvider {
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .mapNotNull { parseLine(it) }
-            .take(limit)
             .toList()
     }
 
