@@ -258,11 +258,6 @@ export function BoardView() {
     requestRender();
   }, [board, requestRender]);
 
-  useEffect(() => {
-    cellSizeRef.current = cellSize;
-    requestRender();
-  }, [cellSize, requestRender]);
-
   useEffect(
     () => () => {
       if (frameRef.current != null) {
@@ -403,6 +398,7 @@ export function BoardView() {
 
     cellSizeRef.current = newScale;
     setCellSize(newScale);
+    requestRender();
   };
 
   const handleAutoFollowShape = (
