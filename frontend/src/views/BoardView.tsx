@@ -59,12 +59,52 @@ export function BoardView() {
   const cameraRef = useRef({ x: 0, y: 0 });
   const cellSizeRef = useRef(cellSize);
   const frameRef = useRef<number | null>(null);
+  const pendingCenterRef = useRef<number[] | null>(null);
 
   const {
     mutateAsync: randomize,
     isPending: randomizing,
     isError,
   } = useRandomBoard();
+
+  const applyCenterAndZoom = useCallback(
+    (canvas: HTMLCanvasElement, cells: number[]) => {
+      if (cells.length < 2) return;
+
+      let minX = cells[0];
+      let maxX = cells[0];
+      let minY = cells[1];
+      let maxY = cells[1];
+      for (let i = 0; i < cells.length; i += 2) {
+        const cx = cells[i];
+        const cy = cells[i + 1];
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+      }
+
+      const shapeWidth = maxX - minX + 1;
+      const shapeHeight = maxY - minY + 1;
+      const shapeCenterX = (minX + maxX + 1) / 2;
+      const shapeCenterY = (minY + maxY + 1) / 2;
+
+      const padding = 0.9;
+      const fitScale =
+        Math.min(canvas.width / shapeWidth, canvas.height / shapeHeight) *
+        padding;
+      const scale = Math.min(100, Math.max(1, fitScale));
+
+      cellSizeRef.current = scale;
+      setCellSize(Math.round(scale * 100) / 100);
+
+      cameraRef.current = {
+        x: shapeCenterX - canvas.width / 2 / scale,
+        y: shapeCenterY - canvas.height / 2 / scale,
+      };
+    },
+    [],
+  );
 
   const render = useCallback(() => {
     frameRef.current = null;
@@ -76,6 +116,11 @@ export function BoardView() {
 
     ctx.canvas.height = window.innerHeight;
     ctx.canvas.width = window.innerWidth;
+
+    if (pendingCenterRef.current) {
+      applyCenterAndZoom(canvas, pendingCenterRef.current);
+      pendingCenterRef.current = null;
+    }
 
     const board = boardRef.current;
     const cells = board?.cells;
@@ -130,19 +175,53 @@ export function BoardView() {
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const startX = Math.round(-(camera.x % 1) * cellSize);
+    const startY = Math.round(-(camera.y % 1) * cellSize);
+
+    const startThickX = Math.round(-(camera.x % 10) * cellSize);
+    const startThickY = Math.round(-(camera.y % 10) * cellSize);
+
+    const startThickestX = Math.round(-(camera.x % 100) * cellSize);
+    const startThickestY = Math.round(-(camera.y % 100) * cellSize);
+
     if (cellSize > 5) {
       ctx.beginPath();
       ctx.strokeStyle = "#ddd";
       ctx.lineWidth = 1;
-
-      const startX = Math.round(-(camera.x % 1) * cellSize);
-      const startY = Math.round(-(camera.y % 1) * cellSize);
 
       for (let x = startX; x <= canvas.width; x += cellSize) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
       }
       for (let y = startY; y <= canvas.height; y += cellSize) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      ctx.stroke();
+    }
+    if (cellSize > 2.5) {
+      ctx.beginPath();
+      ctx.strokeStyle = "#aaa";
+      ctx.lineWidth = 1;
+      for (let x = startThickX; x <= canvas.width; x += cellSize * 10) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      for (let y = startThickY; y <= canvas.height; y += cellSize * 10) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      ctx.stroke();
+    }
+    if (cellSize > 1.1) {
+      ctx.beginPath();
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 1;
+      for (let x = startThickestX; x <= canvas.width; x += cellSize * 100) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      for (let y = startThickestY; y <= canvas.height; y += cellSize * 100) {
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
       }
@@ -167,7 +246,7 @@ export function BoardView() {
 
       ctx.fillRect(screenX, screenY, cellSize, cellSize);
     }
-  }, []);
+  }, [applyCenterAndZoom]);
 
   const requestRender = useCallback(() => {
     if (frameRef.current != null) return;
@@ -214,40 +293,7 @@ export function BoardView() {
 
   const centerAndZoom = useCallback(
     (cells: number[]) => {
-      const canvas = canvasRef.current;
-      if (!canvas || cells.length < 2) return;
-
-      let minX = cells[0];
-      let maxX = cells[0];
-      let minY = cells[1];
-      let maxY = cells[1];
-      for (let i = 0; i < cells.length; i += 2) {
-        const cx = cells[i];
-        const cy = cells[i + 1];
-        if (cx < minX) minX = cx;
-        if (cx > maxX) maxX = cx;
-        if (cy < minY) minY = cy;
-        if (cy > maxY) maxY = cy;
-      }
-
-      const shapeWidth = maxX - minX + 1;
-      const shapeHeight = maxY - minY + 1;
-      const shapeCenterX = (minX + maxX + 1) / 2;
-      const shapeCenterY = (minY + maxY + 1) / 2;
-
-      const padding = 0.9;
-      const fitScale =
-        Math.min(canvas.width / shapeWidth, canvas.height / shapeHeight) *
-        padding;
-      const scale = Math.min(100, Math.max(1, fitScale));
-
-      cellSizeRef.current = scale;
-      setCellSize(Math.round(scale * 100) / 100);
-
-      cameraRef.current = {
-        x: shapeCenterX - canvas.width / 2 / scale,
-        y: shapeCenterY - canvas.height / 2 / scale,
-      };
+      pendingCenterRef.current = cells;
       requestRender();
     },
     [requestRender],
@@ -355,6 +401,7 @@ export function BoardView() {
       y: cameraRef.current.y + mouseY / oldScale - mouseY / newScale,
     };
 
+    cellSizeRef.current = newScale;
     setCellSize(newScale);
   };
 
@@ -440,8 +487,11 @@ export function BoardView() {
     }
   };
 
-  const handleClear = async () => {
-    setBoard(null);
+  const handleClear = () => {
+    if (!board) return;
+    board.cells = [];
+    setBoard(board);
+    requestRender();
   };
 
   return (

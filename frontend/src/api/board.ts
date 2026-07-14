@@ -15,7 +15,6 @@ export async function createRandomBoard(
   if (seed !== undefined && seed !== null)
     params.append("seed", seed.toString());
   let url = `${BASE_URL}/board/random?${params}`;
-  console.log(params, params.size === 0);
   if (params.size === 0) {
     url = `${BASE_URL}/board/random`;
   }

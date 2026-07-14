@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Divider,
   Drawer,
   Slider,
   TextField,
@@ -28,10 +27,6 @@ const StyledButton = styled(Button)`
   &:hover {
     background: #333333;
   }
-`;
-
-const StyledBox = styled(Box)`
-  background: #000000;
 `;
 
 const DrawerContent = styled.div`
@@ -142,7 +137,7 @@ export default function SideDrawer({
   };
 
   const DrawerList = (
-    <StyledBox sx={{ width: 500 }} role="presentation">
+    <Box sx={{ width: 500 }} role="presentation">
       <DrawerContent>
         <ActionButton
           variant="contained"
@@ -223,17 +218,22 @@ export default function SideDrawer({
         <SectionTitle>Patterns</SectionTitle>
         <PatternLibrary onSelect={onSelectPattern} />
       </DrawerContent>
-    </StyledBox>
+    </Box>
   );
 
   return (
-    <div>
+    <>
       <StyledButton onClick={toggleDrawer(true)}>
         <MenuIcon />
       </StyledButton>
-      <Drawer open={open} onClose={toggleDrawer(false)} variant={"persistent"}>
+      <Drawer
+        open={open}
+        onClose={toggleDrawer(false)}
+        variant={"persistent"}
+        slotProps={{ paper: { sx: { background: "#000000" } } }}
+      >
         {DrawerList}
       </Drawer>
-    </div>
+    </>
   );
 }

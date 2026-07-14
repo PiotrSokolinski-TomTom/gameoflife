@@ -35,6 +35,7 @@ class PatternController(private val service: PatternService) {
         @PathVariable category: String,
         @RequestParam(defaultValue = "0") offset: Int,
         @RequestParam(defaultValue = "15") limit: Int,
+        @RequestParam(required = false) prefix: String?,
     ): ResponseEntity<PatternPageDto> =
-        ResponseEntity.ok(PatternPageDto.from(service.browseCategory(category, offset, limit)))
+        ResponseEntity.ok(PatternPageDto.from(service.browseCategory(category, offset, limit, prefix)))
 }

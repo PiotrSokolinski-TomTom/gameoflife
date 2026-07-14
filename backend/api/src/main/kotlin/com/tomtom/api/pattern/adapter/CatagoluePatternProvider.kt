@@ -18,7 +18,6 @@ class CatagoluePatternProvider : PatternProvider {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /** Cache of the full decoded census per "rule/symmetry/prefix". Catagolue censuses are effectively static. */
     private val cache = ConcurrentHashMap<String, List<Pattern>>()
 
     private val restClient: RestClient = RestClient.builder()

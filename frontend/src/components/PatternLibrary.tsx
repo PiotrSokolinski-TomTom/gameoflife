@@ -8,11 +8,37 @@ import { ActionButton, MaxWRow } from "./SideDrawer";
 
 const PAGE_SIZE = 15;
 
-const TABS: { label: string; category: string | null }[] = [
+type TabDef = {
+  label: string;
+  category: string | null;
+  classChar?: string;
+  sizes?: number[];
+};
+
+const TABS: TabDef[] = [
   { label: "Featured", category: null },
-  { label: "Still lifes", category: "still-lifes" },
-  { label: "Oscillators", category: "oscillators" },
-  { label: "Spaceships", category: "spaceships" },
+  {
+    label: "Still lifes",
+    category: "still-lifes",
+    classChar: "xs",
+    sizes: [
+      4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+      24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41,
+      42, 43, 44, 45, 46, 47, 48, 50, 56,
+    ],
+  },
+  {
+    label: "Oscillators",
+    category: "oscillators",
+    classChar: "xp",
+    sizes: [2, 3, 4, 5, 6, 8, 14, 15, 16, 24, 30, 46, 120],
+  },
+  {
+    label: "Spaceships",
+    category: "spaceships",
+    classChar: "xq",
+    sizes: [4, 7, 12, 16],
+  },
 ];
 
 const Tabs = styled.div`
@@ -30,6 +56,24 @@ const Tab = styled.button<{ $active: boolean }>`
   border: 1px solid #ffffff;
   background: ${(p) => (p.$active ? "#ffffff" : "transparent")};
   color: ${(p) => (p.$active ? "#000000" : "#ffffff")};
+  cursor: pointer;
+`;
+
+const Chips = styled.div`
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 8px;
+  flex-wrap: wrap;
+`;
+
+const Chip = styled.button<{ $active: boolean }>`
+  font-size: 12px;
+  font-family: "Courier New", Courier, monospace;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid ${(p) => (p.$active ? "#ffffff" : "#666")};
+  background: ${(p) => (p.$active ? "#ffffff" : "transparent")};
+  color: ${(p) => (p.$active ? "#000000" : "#ccc")};
   cursor: pointer;
 `;
 
@@ -62,12 +106,20 @@ export function PatternLibrary({
 }) {
   const [activeTab, setActiveTab] = useState(0);
   const [offset, setOffset] = useState(0);
-  const category = TABS[activeTab].category;
+  const [activePrefix, setActivePrefix] = useState<string | null>(null);
+  const tab = TABS[activeTab];
+  const category = tab.category;
   const featured = useFeaturedPatterns();
-  const categoryQuery = useCategoryPatterns(category, offset, PAGE_SIZE);
+  const categoryQuery = useCategoryPatterns(
+    category,
+    offset,
+    PAGE_SIZE,
+    activePrefix ?? undefined,
+  );
   const query = category === null ? featured : categoryQuery;
 
-  const patterns = category === null ? featured.data : categoryQuery.data?.patterns;
+  const patterns =
+    category === null ? featured.data : categoryQuery.data?.patterns;
   const hasMore = categoryQuery.data?.hasMore ?? false;
 
   return (
@@ -80,12 +132,42 @@ export function PatternLibrary({
             onClick={() => {
               setActiveTab(i);
               setOffset(0);
+              setActivePrefix(null);
             }}
           >
             {tab.label}
           </Tab>
         ))}
       </Tabs>
+      {tab.sizes && tab.classChar && (
+        <Chips>
+          <Chip
+            $active={activePrefix === null}
+            onClick={() => {
+              setActivePrefix(null);
+              setOffset(0);
+            }}
+          >
+            All
+          </Chip>
+          {tab.sizes.map((size) => {
+            const prefix = `${tab.classChar}${size}`;
+            return (
+              <Chip
+                key={prefix}
+                $active={activePrefix === prefix}
+                onClick={() => {
+                  setActivePrefix(prefix);
+                  setOffset(0);
+                }}
+                title={prefix}
+              >
+                {size}
+              </Chip>
+            );
+          })}
+        </Chips>
+      )}
       <Grid>
         {query.isLoading && <CircularProgress size={24} />}
         {query.isError && (

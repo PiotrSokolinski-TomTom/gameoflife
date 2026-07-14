@@ -21,9 +21,14 @@ export async function fetchCategory(
   category: string,
   offset = 0,
   limit = 15,
+  prefix?: string,
 ): Promise<PatternPage> {
+  const params = new URLSearchParams();
+  params.append("offset", offset.toString());
+  params.append("limit", limit.toString());
+  if (prefix) params.append("prefix", prefix);
   const response = await fetch(
-    `${BASE_URL}/patterns/category/${category}?offset=${offset}&limit=${limit}`,
+    `${BASE_URL}/patterns/category/${category}?${params}`,
   );
   if (!response.ok) {
     throw new Error("API error");

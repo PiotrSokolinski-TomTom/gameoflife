@@ -3,8 +3,6 @@ package com.tomtom.api.dto
 import com.tomtom.core.Position
 import kotlinx.serialization.Serializable
 
-//flatten in place, JSON.parse is insanely slow
-
 @Serializable
 class BoardDto(val cells: IntArray) {
 

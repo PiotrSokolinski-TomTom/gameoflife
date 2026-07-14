@@ -16,10 +16,12 @@ const Card = styled.button`
   cursor: pointer;
   color: white;
   width: 130px;
+  transition: 0.2s;
 
   &:hover {
     border-color: #888;
     background: #363636;
+    transform: scale(1.3);
   }
 `;
 
@@ -28,13 +30,17 @@ const Preview = styled.canvas`
   border-radius: 4px;
 `;
 
-const Name = styled.span<{ $label: string }>`
-  font-size: ${(p) => (p.$label.length > 15 ? "10px" : "13px")};
-  font-weight: 600;
+const Name = styled.div`
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
   text-align: center;
+  width:120px;
+  text-overflow: ellipsis;
+  overflow:hidden;
 `;
 
 const Meta = styled.span`
+  font-family: "Courier New", Courier, monospace;
   font-size: 10px;
   color: #aaa;
   text-align: center;
@@ -90,9 +96,9 @@ export function PatternCard({
   return (
     <Card onClick={() => onLoad(pattern)} title={`Load ${pattern.apgcode}`}>
       <Preview ref={canvasRef} width={PREVIEW_SIZE} height={PREVIEW_SIZE} />
-      <Name $label={label}>{label}</Name>
+      <Name>{label}</Name>
       <Meta>
-        {pattern.width}x{pattern.height} · seen{" "}
+        {pattern.width}x{pattern.height} - seen{" "}
         {formatOccurrences(pattern.occurrences)}
       </Meta>
     </Card>
