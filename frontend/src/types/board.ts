@@ -1,6 +1,4 @@
-export type Coordinate = `(${number}, ${number})`;
-export type CellState = "ALIVE" | "DEAD";
-
 export interface Board {
-  cells: Partial<Record<Coordinate, CellState>>;
+  //flat array -> [x0,y0,x1,y1,...]
+  cells: number[];
 }

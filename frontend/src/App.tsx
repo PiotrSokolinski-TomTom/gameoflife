@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import "./App.css";
 import { BoardView } from "./views/BoardView";
 
@@ -7,6 +7,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path={"/board"} element={<BoardView />} />
+          <Route path="*" element={<Navigate to='/board' replace />} />
       </Routes>
     </BrowserRouter>
   );
